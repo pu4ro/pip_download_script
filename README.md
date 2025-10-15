@@ -4,7 +4,8 @@ A bash script to download Python packages for multiple Python versions.
 
 ## Description
 
-This script downloads the `mrx_link_git` package (version 2.2.0) and its dependencies for multiple Python versions (3.8, 3.9, 3.10, 3.11) using separate virtual environments.
+This script downloads the `mrx_link` (v2.4.1) and `mrx-runway` (v1.13.1) packages and their dependencies for multiple Python versions (3.8, 3.9, 3.10, 3.11) using separate virtual environments.
+`mrx_link_git` (v2.2.0) is resolved automatically as a dependency of `mrx_link`.
 
 ## Features
 
@@ -36,16 +37,16 @@ This script downloads the `mrx_link_git` package (version 2.2.0) and its depende
 You can modify the following variables in the script:
 
 - `PYTHON_VERSIONS`: Array of Python versions to use
-- `PACKAGE_NAME`: Name of the package to download
-- `PACKAGE_VERSION`: Version of the package to download
-- `OUTPUT_DIR`: Directory where downloaded packages will be stored
+- `MRX_LINK_VERSION`: Version of `mrx_link` to download
+- `MRX_RUNWAY_VERSION`: Version of `mrx-runway` to download
+- `OUTPUT_ROOT`: Root directory for downloaded packages
 - `PIP_INDEX_URL`: PyPI index URL to use for downloads
 
 ## Output
 
-Downloaded packages will be stored in:
+Downloaded packages will be stored in a directory combining the target versions, for example:
 ```
-/root/pip_runway_download/v2.2.0/
+/root/pip_runway_download/mrx_link_2.4.1__mrx-runway_1.13.1/
 ```
 
 ## Dependencies
