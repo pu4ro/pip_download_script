@@ -1,4 +1,4 @@
-.PHONY: help setup venv clean clean-venv clean-downloads download install-deps check-python all list-packages
+.PHONY: help setup venv clean clean-venv clean-downloads download install-deps install-python check-python all list-packages
 
 # Python 버전 설정
 PYTHON_VERSIONS := 3.8 3.9 3.10 3.11
@@ -24,17 +24,18 @@ COLOR_ERROR := \033[31m
 
 help:
 	@echo "$(COLOR_INFO)Available commands:$(COLOR_RESET)"
+	@echo "  make install-python     - 필요한 모든 Python 버전 설치 (공식 repo)"
+	@echo "  make check-python       - 설치된 Python 버전 확인"
+	@echo "  make install-deps       - 시스템 의존성 설치 (PostgreSQL dev tools)"
 	@echo "  make setup              - 모든 Python 버전에 대한 venv 생성 및 설정"
 	@echo "  make venv VERSION=X     - 특정 Python 버전(X)에 대한 venv 생성"
-	@echo "  make install-deps       - 시스템 의존성 설치 (PostgreSQL dev tools)"
 	@echo "  make download           - 모든 Python 버전에 대해 패키지 다운로드"
 	@echo "  make download VERSION=X - 특정 Python 버전에 대해서만 다운로드"
 	@echo "  make list-packages      - requirements.txt의 패키지 목록 표시"
 	@echo "  make clean              - venv 및 다운로드 파일 모두 정리"
 	@echo "  make clean-venv         - venv만 정리"
 	@echo "  make clean-downloads    - 다운로드 파일만 정리"
-	@echo "  make check-python       - 설치된 Python 버전 확인"
-	@echo "  make all                - 전체 프로세스 실행 (설정 + 다운로드)"
+	@echo "  make all                - 전체 프로세스 실행 (Python 설치 + 설정 + 다운로드)"
 	@echo ""
 	@echo "$(COLOR_INFO)지원 Python 버전:$(COLOR_RESET) $(PYTHON_VERSIONS)"
 	@echo "$(COLOR_INFO)패키지 관리:$(COLOR_RESET) $(REQUIREMENTS_FILE)"
@@ -61,6 +62,27 @@ list-packages:
 	else \
 		echo "$(COLOR_ERROR)$(REQUIREMENTS_FILE) not found$(COLOR_RESET)"; \
 	fi
+
+install-python:
+	@echo "$(COLOR_INFO)Installing Python versions from official repository...$(COLOR_RESET)"
+	@if ! command -v apt-get >/dev/null 2>&1; then \
+		echo "$(COLOR_ERROR)Error: apt-get not found. This script requires Ubuntu/Debian.$(COLOR_RESET)"; \
+		exit 1; \
+	fi
+	@echo "$(COLOR_INFO)Adding deadsnakes PPA...$(COLOR_RESET)"
+	@sudo apt-get update
+	@sudo apt-get install -y software-properties-common
+	@sudo add-apt-repository -y ppa:deadsnakes/ppa
+	@sudo apt-get update
+	@echo "$(COLOR_INFO)Installing Python versions and venv packages...$(COLOR_RESET)"
+	@for ver in $(PYTHON_VERSIONS); do \
+		echo "$(COLOR_INFO)Installing python$$ver...$(COLOR_RESET)"; \
+		sudo apt-get install -y python$$ver python$$ver-venv python$$ver-distutils || \
+		echo "$(COLOR_WARNING)Failed to install python$$ver$(COLOR_RESET)"; \
+	done
+	@echo "$(COLOR_SUCCESS)Python installation complete!$(COLOR_RESET)"
+	@echo ""
+	@$(MAKE) check-python
 
 install-deps:
 	@echo "$(COLOR_INFO)Installing system dependencies...$(COLOR_RESET)"
@@ -178,5 +200,5 @@ clean-downloads:
 clean: clean-venv clean-downloads
 	@echo "$(COLOR_SUCCESS)All cleaned!$(COLOR_RESET)"
 
-all: setup download
+all: install-python install-deps setup download
 	@echo "$(COLOR_SUCCESS)All tasks completed!$(COLOR_RESET)"

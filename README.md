@@ -29,11 +29,23 @@ make all
 ```
 
 이 명령어는 다음을 순차적으로 실행합니다:
-- 시스템 의존성 설치
+- **Python 버전 설치** (3.8, 3.9, 3.10, 3.11) - deadsnakes PPA 사용
+- 시스템 의존성 설치 (libpq-dev 등)
 - 모든 Python 버전에 대한 venv 생성
 - requirements.txt의 모든 패키지 다운로드
 
 ### 2. 단계별 실행
+
+#### Python 버전 설치 (첫 실행 시 필요)
+```bash
+# deadsnakes PPA를 통해 Python 3.8, 3.9, 3.10, 3.11 설치
+make install-python
+```
+
+이 명령어는 다음을 수행합니다:
+- deadsnakes PPA 저장소 추가
+- Python 3.8, 3.9, 3.10, 3.11 및 각각의 venv 패키지 설치
+- 설치 완료 후 자동으로 설치된 버전 확인
 
 #### 사용 가능한 Python 버전 확인
 ```bash
@@ -91,14 +103,15 @@ make list-packages
 | 명령어 | 설명 |
 |--------|------|
 | `make help` | 사용 가능한 모든 명령어 표시 |
-| `make all` | 전체 프로세스 실행 (setup + download) |
+| `make all` | 전체 프로세스 실행 (Python 설치 + setup + download) |
+| `make install-python` | 필요한 모든 Python 버전 설치 (공식 repo) |
+| `make check-python` | 설치된 Python 버전 확인 |
+| `make install-deps` | 시스템 의존성 설치 |
 | `make setup` | 모든 Python 버전에 대한 venv 생성 |
 | `make venv VERSION=X` | 특정 Python 버전에 대한 venv 생성 |
 | `make download` | 모든 Python 버전에 대해 패키지 다운로드 |
 | `make download VERSION=X` | 특정 Python 버전에 대해 패키지 다운로드 |
-| `make check-python` | 설치된 Python 버전 확인 |
 | `make list-packages` | requirements.txt의 패키지 목록 표시 |
-| `make install-deps` | 시스템 의존성 설치 |
 | `make clean` | venv 및 다운로드 파일 모두 삭제 |
 | `make clean-venv` | venv만 삭제 |
 | `make clean-downloads` | 다운로드 파일만 삭제 |
@@ -144,9 +157,15 @@ chmod +x pip_download.sh
 
 ### Python 버전이 없는 경우
 ```bash
-# Python 3.X 설치 (Ubuntu/Debian)
+# Makefile을 통한 자동 설치 (권장)
+make install-python
+
+# 또는 수동 설치
 sudo apt-get update
-sudo apt-get install python3.X python3.X-venv
+sudo apt-get install software-properties-common
+sudo add-apt-repository ppa:deadsnakes/ppa
+sudo apt-get update
+sudo apt-get install python3.X python3.X-venv python3.X-distutils
 ```
 
 ### venv 재생성이 필요한 경우
@@ -161,9 +180,26 @@ make clean-downloads
 make download
 ```
 
+## 테스트 환경 배포
+
+테스트 서버(192.168.135.72)로 배포하려면:
+
+```bash
+# 배포 스크립트 실행
+./deploy-to-test.sh
+
+# SSH로 테스트 서버 접속
+ssh root@192.168.135.72
+
+# 테스트 서버에서 실행
+cd /root/pip_download_script
+make all
+```
+
 ## Notes
 
 - 가상 환경은 기본적으로 `/tmp/venv_runway/`에 생성됩니다
 - 각 Python 버전은 독립적인 가상 환경을 사용합니다
 - `mrx_link_git`는 `mrx_link`의 의존성으로 자동 다운로드됩니다
 - 모든 Python 버전에서 동일한 패키지를 다운로드하지만, 각 버전별 wheel이 다를 수 있습니다
+- Python 설치는 deadsnakes PPA(공식 저장소)를 사용합니다
