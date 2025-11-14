@@ -1,62 +1,169 @@
 # Pip Download Script
 
-A bash script to download Python packages for multiple Python versions.
+Python 패키지를 여러 버전의 Python 환경에서 다운로드하는 도구입니다.
 
 ## Description
 
-This script downloads the `mrx_link` (v2.4.1) and `mrx-runway` (v1.13.1) packages and their dependencies for multiple Python versions (3.8, 3.9, 3.10, 3.11) using separate virtual environments.
-`mrx_link_git` (v2.2.0) is resolved automatically as a dependency of `mrx_link`.
+이 프로젝트는 `mrx_link`, `mrx-runway` 및 기타 Python 패키지를 여러 Python 버전(3.8, 3.9, 3.10, 3.11)에 대해 다운로드합니다. 각 Python 버전별로 격리된 가상 환경(venv)을 사용하여 의존성 충돌을 방지합니다.
 
 ## Features
 
-- Downloads packages for multiple Python versions
-- Uses isolated virtual environments for each Python version
-- Installs PostgreSQL development tools as prerequisites
-- Downloads packages with dependencies to a specified output directory
+- **다중 Python 버전 지원**: 여러 Python 버전에 대한 패키지 다운로드
+- **격리된 가상 환경**: 각 Python 버전별 독립적인 venv 사용
+- **유연한 패키지 관리**: requirements.txt를 통한 패키지 추가/관리
+- **Makefile 기반 자동화**: 간편한 명령어로 전체 프로세스 실행
+- **시스템 의존성 자동 설치**: PostgreSQL 개발 도구 등 자동 설치
 
 ## Prerequisites
 
-- Ubuntu/Debian-based system with `sudo` privileges
-- Python 3.8, 3.9, 3.10, and 3.11 installed
-- Internet connection
+- Ubuntu/Debian 기반 시스템 (sudo 권한 필요)
+- Python 3.8, 3.9, 3.10, 3.11 설치
+- 인터넷 연결
+- make 설치
 
-## Usage
+## Quick Start
 
-1. Make the script executable:
-   ```bash
-   chmod +x pip_download.sh
-   ```
+### 1. 전체 프로세스 실행 (권장)
+```bash
+make all
+```
 
-2. Run the script:
-   ```bash
-   ./pip_download.sh
-   ```
+이 명령어는 다음을 순차적으로 실행합니다:
+- 시스템 의존성 설치
+- 모든 Python 버전에 대한 venv 생성
+- requirements.txt의 모든 패키지 다운로드
+
+### 2. 단계별 실행
+
+#### 사용 가능한 Python 버전 확인
+```bash
+make check-python
+```
+
+#### 시스템 의존성 설치
+```bash
+make install-deps
+```
+
+#### 가상 환경 설정
+```bash
+# 모든 Python 버전에 대해 venv 생성
+make setup
+
+# 특정 Python 버전에 대해서만 venv 생성
+make venv VERSION=3.9
+```
+
+#### 패키지 다운로드
+```bash
+# 모든 Python 버전에 대해 다운로드
+make download
+
+# 특정 Python 버전에 대해서만 다운로드
+make download VERSION=3.10
+```
+
+## 패키지 관리
+
+### 패키지 추가하기
+
+`requirements.txt` 파일을 수정하여 다운로드할 패키지를 추가/변경할 수 있습니다:
+
+```bash
+# requirements.txt
+mrx_link==2.4.1
+mrx-runway==1.13.1
+psycopg2>=2.9.5,<3.0.0
+
+# 추가 패키지 예시
+numpy==1.24.0
+pandas>=2.0.0
+requests
+```
+
+### 현재 패키지 목록 확인
+```bash
+make list-packages
+```
+
+## Available Commands
+
+| 명령어 | 설명 |
+|--------|------|
+| `make help` | 사용 가능한 모든 명령어 표시 |
+| `make all` | 전체 프로세스 실행 (setup + download) |
+| `make setup` | 모든 Python 버전에 대한 venv 생성 |
+| `make venv VERSION=X` | 특정 Python 버전에 대한 venv 생성 |
+| `make download` | 모든 Python 버전에 대해 패키지 다운로드 |
+| `make download VERSION=X` | 특정 Python 버전에 대해 패키지 다운로드 |
+| `make check-python` | 설치된 Python 버전 확인 |
+| `make list-packages` | requirements.txt의 패키지 목록 표시 |
+| `make install-deps` | 시스템 의존성 설치 |
+| `make clean` | venv 및 다운로드 파일 모두 삭제 |
+| `make clean-venv` | venv만 삭제 |
+| `make clean-downloads` | 다운로드 파일만 삭제 |
 
 ## Configuration
 
-You can modify the following variables in the script:
+### Makefile 설정
 
-- `PYTHON_VERSIONS`: Array of Python versions to use
-- `MRX_LINK_VERSION`: Version of `mrx_link` to download
-- `MRX_RUNWAY_VERSION`: Version of `mrx-runway` to download
-- `OUTPUT_ROOT`: Root directory for downloaded packages
-- `PIP_INDEX_URL`: PyPI index URL to use for downloads
+`Makefile`의 상단에서 다음 설정을 변경할 수 있습니다:
+
+```makefile
+PYTHON_VERSIONS := 3.8 3.9 3.10 3.11  # 지원할 Python 버전
+VENV_DIR := /tmp/venv_runway            # venv 생성 경로
+OUTPUT_ROOT := /root/pip_runway_download # 다운로드 경로
+PIP_INDEX_URL := https://pypi.org/simple/ # PyPI 인덱스 URL
+```
+
+### 환경 변수 (.env)
+
+`.env.example` 파일을 복사하여 `.env` 파일을 만들고 필요한 설정을 변경할 수 있습니다:
+
+```bash
+cp .env.example .env
+```
 
 ## Output
 
-Downloaded packages will be stored in a directory combining the target versions, for example:
+다운로드된 패키지는 다음 경로에 저장됩니다:
 ```
-/root/pip_runway_download/mrx_link_2.4.1__mrx-runway_1.13.1/
+/root/pip_runway_download/packages/
 ```
 
-## Dependencies
+## 기존 Bash 스크립트
 
-The script automatically installs:
-- `libpq-dev` (PostgreSQL development headers)
-- Updates pip in each virtual environment
+기존의 `pip_download.sh` 스크립트도 여전히 사용 가능합니다:
+
+```bash
+chmod +x pip_download.sh
+./pip_download.sh
+```
+
+## Troubleshooting
+
+### Python 버전이 없는 경우
+```bash
+# Python 3.X 설치 (Ubuntu/Debian)
+sudo apt-get update
+sudo apt-get install python3.X python3.X-venv
+```
+
+### venv 재생성이 필요한 경우
+```bash
+make clean-venv
+make setup
+```
+
+### 다운로드 재시작
+```bash
+make clean-downloads
+make download
+```
 
 ## Notes
 
-- Virtual environments are created in `/tmp/venv_runway/`
-- The script includes `psycopg2<3.0.0,>=2.9.5` as an additional dependency
-- Each Python version uses its own isolated virtual environment
+- 가상 환경은 기본적으로 `/tmp/venv_runway/`에 생성됩니다
+- 각 Python 버전은 독립적인 가상 환경을 사용합니다
+- `mrx_link_git`는 `mrx_link`의 의존성으로 자동 다운로드됩니다
+- 모든 Python 버전에서 동일한 패키지를 다운로드하지만, 각 버전별 wheel이 다를 수 있습니다

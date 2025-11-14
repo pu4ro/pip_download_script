@@ -31,28 +31,48 @@ sudo apt install -y libpq-dev
 
 # 출력 디렉토리 생성
 mkdir -p ${OUTPUT_DIR}
+mkdir -p ${VENV_DIR}
 
 # 각 Python 버전에 대해 virtualenv 생성 및 패키지 다운로드
 for PYTHON_VER in "${PYTHON_VERSIONS[@]}"; do
     echo "Processing Python ${PYTHON_VER}..."
     
+    # 해당 Python 인터프리터 존재 여부 확인
+    if ! command -v "python${PYTHON_VER}" >/dev/null 2>&1; then
+        echo "python${PYTHON_VER} not found. Skipping this version."
+        continue
+    fi
+    
     # virtualenv 생성
     VENV_PATH="${VENV_DIR}/python${PYTHON_VER}"
-    python${PYTHON_VER} -m venv ${VENV_PATH}
+    if [ -d "${VENV_PATH}" ] && [ -f "${VENV_PATH}/bin/activate" ]; then
+        echo "Existing virtualenv detected at ${VENV_PATH}. Skipping creation."
+    else
+        echo "Creating virtualenv at ${VENV_PATH}..."
+        python${PYTHON_VER} -m venv "${VENV_PATH}"
+    fi
     
-    # virtualenv 활성화
-    source ${VENV_PATH}/bin/activate
+    # virtualenv 활성화 (존재 확인 후)
+    if [ -f "${VENV_PATH}/bin/activate" ]; then
+        # shellcheck disable=SC1091
+        source "${VENV_PATH}/bin/activate"
+    else
+        echo "Activate script not found for ${PYTHON_VER}. Skipping."
+        continue
+    fi
     
-    # pip 업그레이드
-    pip install --upgrade pip
+    # pip 업그레이드 (해당 venv의 python 사용 보장)
+    python -m pip install --upgrade pip
     
     # 패키지 다운로드 (의존성 문자열을 따옴표로 감쌈)
-    pip download "${PACKAGES[@]}" "psycopg2<3.0.0,>=2.9.5" \
+    python -m pip download "${PACKAGES[@]}" "psycopg2<3.0.0,>=2.9.5" \
         -d "${OUTPUT_DIR}" \
         --index-url "${PIP_INDEX_URL}"
     
     # virtualenv 비활성화
-    deactivate
+    if type deactivate >/dev/null 2>&1; then
+        deactivate
+    fi
 done
 
 echo "All packages have been downloaded to ${OUTPUT_DIR}."
