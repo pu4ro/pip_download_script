@@ -1,16 +1,15 @@
 .PHONY: help setup venv clean clean-venv clean-downloads download install-deps install-python check-python all list-packages
 
-# Python 버전 설정
-PYTHON_VERSIONS := 3.8 3.9 3.10 3.11
+# .env 파일 로드 (따옴표 제거)
+PYTHON_VERSIONS := $(shell . ./.env && echo $$PYTHON_VERSIONS)
+OUTPUT_ROOT := $(shell . ./.env && echo $$OUTPUT_ROOT)
+VENV_DIR := $(shell . ./.env && echo $$VENV_DIR)
+PIP_INDEX_URL := $(shell . ./.env && echo $$PIP_INDEX_URL)
+
 DEFAULT_PYTHON := python3
 
-# 디렉토리 설정
-VENV_DIR := /tmp/venv_runway
-OUTPUT_ROOT := /root/pip_runway_download
-OUTPUT_DIR := $(OUTPUT_ROOT)/packages
-
-# PyPI 설정
-PIP_INDEX_URL := https://pypi.org/simple/
+# 출력 디렉토리
+OUTPUT_DIR := $(OUTPUT_ROOT)/$(shell date +%Y%m%d)
 
 # Requirements 파일
 REQUIREMENTS_FILE := requirements.txt
@@ -77,8 +76,9 @@ install-python:
 	@echo "$(COLOR_INFO)Installing Python versions and venv packages...$(COLOR_RESET)"
 	@for ver in $(PYTHON_VERSIONS); do \
 		echo "$(COLOR_INFO)Installing python$$ver...$(COLOR_RESET)"; \
-		sudo apt-get install -y python$$ver python$$ver-venv python$$ver-distutils || \
-		echo "$(COLOR_WARNING)Failed to install python$$ver$(COLOR_RESET)"; \
+		sudo apt-get install -y python$$ver python$$ver-venv && \
+		sudo apt-get install -y python$$ver-distutils 2>/dev/null; \
+		true || echo "$(COLOR_WARNING)Failed to install python$$ver$(COLOR_RESET)"; \
 	done
 	@echo "$(COLOR_SUCCESS)Python installation complete!$(COLOR_RESET)"
 	@echo ""

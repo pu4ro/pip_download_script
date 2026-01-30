@@ -1,28 +1,24 @@
 #!/bin/bash
 
-# Python 버전 목록
-PYTHON_VERSIONS=("3.8" "3.9" "3.10" "3.11" )
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
-# 타깃 패키지 버전
-# mrx_link 설치 시 mrx_link_git(현재 2.2.0)은 의존성으로 자동 포함/업데이트 됩니다.
-MRX_LINK_VERSION="2.4.1"
-MRX_RUNWAY_VERSION="1.13.1"
+# .env 파일 로드
+if [ -f "${SCRIPT_DIR}/.env" ]; then
+    # shellcheck disable=SC1091
+    source "${SCRIPT_DIR}/.env"
+else
+    echo ".env file not found. Copy .env.example to .env and configure it."
+    exit 1
+fi
 
-# 다운로드 대상 패키지 목록 (필요 시 추가)
-PACKAGES=(
-  "mrx_link==${MRX_LINK_VERSION}"
-  "mrx-runway==${MRX_RUNWAY_VERSION}"
-)
+# .env 값을 배열로 변환
+read -ra PYTHON_VERSIONS <<< "${PYTHON_VERSIONS}"
 
-# 출력 디렉토리 루트 및 조합 버전 디렉토리명
-OUTPUT_ROOT="/root/pip_runway_download"
-OUTPUT_DIR_NAME="mrx_link_${MRX_LINK_VERSION}__mrx-runway_${MRX_RUNWAY_VERSION}"
-OUTPUT_DIR="${OUTPUT_ROOT}/${OUTPUT_DIR_NAME}"
+# requirements.txt 경로
+REQUIREMENTS_FILE="${SCRIPT_DIR}/requirements.txt"
 
-PIP_INDEX_URL="https://pypi.org/simple/"
-
-# virtualenv 작업 디렉토리
-VENV_DIR="/tmp/venv_runway"
+# 출력 디렉토리
+OUTPUT_DIR="${OUTPUT_ROOT}/$(date +%Y%m%d)"
 
 # PostgreSQL 개발 도구 설치 (psycopg2 빌드용 헤더)
 echo "Installing PostgreSQL development tools..."
@@ -64,8 +60,15 @@ for PYTHON_VER in "${PYTHON_VERSIONS[@]}"; do
     # pip 업그레이드 (해당 venv의 python 사용 보장)
     python -m pip install --upgrade pip
     
-    # 패키지 다운로드 (의존성 문자열을 따옴표로 감쌈)
-    python -m pip download "${PACKAGES[@]}" "psycopg2<3.0.0,>=2.9.5" \
+    # venv 기본 패키지 다운로드 (pip, setuptools, wheel)
+    python -m pip download \
+        pip setuptools wheel \
+        -d "${OUTPUT_DIR}" \
+        --index-url "${PIP_INDEX_URL}"
+
+    # requirements.txt 기반 패키지 다운로드
+    python -m pip download \
+        -r "${REQUIREMENTS_FILE}" \
         -d "${OUTPUT_DIR}" \
         --index-url "${PIP_INDEX_URL}"
     
